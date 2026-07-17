@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur d'Épaisseur de Dos - Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#030712">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .bg-gradient-premium {
+            background: linear-gradient(135deg, #111827 0%, #030712 100%);
+        }
+        .text-gradient-gold {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Effet d'ombre réaliste pour l'arrondi du dos carré collé */
+        .spine-shadow {
+            box-shadow: inset -8px 0 12px rgba(0, 0, 0, 0.4), inset 8px 0 12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-5xl bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        
+        <!-- SECTION GAUCHE : PARAMÈTRES (5 Cols) -->
+        <div class="p-6 md:p-8 space-y-6 lg:col-span-5 flex flex-col justify-between">
+            <div class="space-y-6">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                        <span>CONFIGURATEUR</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Dos Carré Collé / Atelier Impression</p>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <div class="space-y-5">
+                    <!-- Type de Papier -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">1. Papier Intérieur</label>
+                        <select id="typePapier" class="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:outline-none focus:border-amber-500 transition font-medium" onchange="calculerTranche()">
+                            <option value="couche-mat">Papier Couché Mat (Standard Livre)</option>
+                            <option value="couche-brillant">Papier Couché Brillant (Magazine / Glacé)</option>
+                            <option value="offset">Papier Offset (Roman / Registre / Standard)</option>
+                        </select>
+                    </div>
+
+                    <!-- Grammage & Pages -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Grammage (g)</label>
+                            <input type="number" id="grammage" value="115" min="60" max="350" class="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-black text-lg focus:outline-none focus:border-amber-500 transition" oninput="calculerTranche()">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Nb de Pages</label>
+                            <input type="number" id="nbPages" value="200" min="4" step="2" class="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-500 font-black text-lg focus:outline-none focus:border-amber-500 transition" oninput="calculerTranche()">
+                        </div>
+                    </div>
+
+                    <!-- Couverture -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">4. Grammage Couverture</label>
+                        <select id="grammageCouv" class="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:outline-none focus:border-amber-500 transition" onchange="calculerTranche()">
+                            <option value="300">Couché 300g (Classique)</option>
+                            <option value="350">Couché 350g (Rigide)</option>
+                            <option value="250">Couché 250g (Souple)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fiche technique atelier -->
+            <div class="mt-8 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-xs text-slate-400 space-y-2">
+                <div class="font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wide text-[10px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Éléments de calcul :
+                </div>
+                <div class="flex justify-between"><span>Nombre total de feuilles :</span> <span id="noteFeuilles" class="text-white font-bold">0</span></div>
+                <div class="flex justify-between"><span>Épaisseur bloc brut :</span> <span id="noteBloc" class="text-white font-bold">0</span> mm</div>
+                <div class="flex justify-between"><span>Couche de colle PUR/Hotmelt :</span> <span class="text-emerald-400 font-bold">+ 0.50 mm</span></div>
+            </div>
+        </div>
+
+        <!-- SECTION DROITE : RÉSULTATS VISUELS XXL & PROPORTIONNELS (7 Cols) -->
+        <div class="bg-gradient-premium p-6 md:p-8 lg:col-span-7 flex flex-col justify-between items-center border-t lg:border-t-0 lg:border-l border-slate-800 relative min-h-[450px]">
+            
+            <!-- Compteur Digital Haut de gamme -->
+            <div class="w-full flex justify-between items-start border-b border-slate-800/80 pb-4">
+                <div>
+                    <h2 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Épaisseur Totale de la Tranche</h2>
+                    <div class="text-5xl font-black text-gradient-gold tracking-tight mt-1">
+                        <span id="resultatMm">0.00</span><span class="text-2xl text-slate-400 font-light ml-1">mm</span>
+                    </div>
+                </div>
+                <div class="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider mt-2">
+                    Échelle 1:10 (1mm = 10px)
+                </div>
+            </div>
+
+            <!-- ZONE APERÇU XXL PROPORTIONNEL -->
+            <div class="w-full flex items-center justify-center my-6 overflow-x-auto py-4">
+                <div class="flex items-stretch bg-slate-950/40 p-8 rounded-2xl border border-slate-800/50 min-w-[280px] max-w-full justify-center transition-all">
+                    
+                    <!-- Couverture Face (Plat devant) -->
+                    <div class="w-24 bg-slate-800/90 rounded-l-xl border-y border-l border-slate-700 shadow-2xl flex flex-col justify-between p-3 select-none text-center">
+                        <span class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Plat Devant</span>
+                        <div class="text-[11px] text-slate-400 font-bold my-12">COUVERTURE (RECTO)</div>
+                        <span class="text-[9px] text-slate-600">PAGE 1</span>
+                    </div>
+                    
+                    <!-- LA TRANCHE DYNAMIQUE ET PROPORTIONNELLE -->
+                    <div id="simuTranche" class="bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 spine-shadow border-y border-amber-300 transition-all duration-300 flex items-center justify-center relative min-w-[4px] shadow-[0_0_30px_rgba(245,158,11,0.15)]" style="width: 100px;">
+                        <!-- Ligne centrale de pliage pour aider l'infographe -->
+                        <div class="absolute inset-y-0 left-1/2 w-[1px] bg-amber-500/20 border-dashed"></div>
+                        
+                        <!-- Texte Tranche -->
+                        <div id="textTranche" class="absolute font-black text-slate-950 uppercase tracking-[0.2em] whitespace-nowrap text-center origin-center transition-opacity duration-200" style="font-size: 11px; transform: rotate(-90deg);">
+                            <span id="labelTranche">TRANCHE</span> : <span id="textMmDynamique">0.0</span> mm
+                        </div>
+                    </div>
+                    
+                    <!-- Couverture Dos (Plat derrière) -->
+                    <div class="w-24 bg-slate-800/90 rounded-r-xl border-y border-r border-slate-700 shadow-2xl flex flex-col justify-between p-3 select-none text-center">
+                        <span class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Plat Verso</span>
+                        <div class="text-[11px] text-slate-400 font-bold my-12">COUVERTURE (VERSO)</div>
+                        <span class="text-[9px] text-slate-600">DERNIÈRE PAGE</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer info technique d'aide aux repères -->
+            <p class="text-[11px] text-slate-500 text-center w-full">
+                💡 Utilisez cette mesure sur **Adobe Illustrator / InDesign** pour définir l'espace exact entre vos repères de pliage du dos.
+            </p>
+            
+        </div>
+    </div>
+
+    <script>
+        const facteursMain = {
+            'couche-mat': 0.85,
+            'couche-brillant': 0.80,
+            'offset': 1.15
+        };
+
+        function calculerTranche() {
+            const typePapier = document.getElementById('typePapier').value;
+            const grammage = parseFloat(document.getElementById('grammage').value) || 0;
+            const nbPages = parseInt(document.getElementById('nbPages').value) || 0;
+            const grammageCouv = parseFloat(document.getElementById('grammageCouv').value) || 300;
+
+            const nbFeuilles = Math.ceil(nbPages / 2);
+            const main = facteursMain[typePapier];
+            const epaisseurUneFeuille = (grammage * main) / 1000;
+            let epaisseurBloc = nbFeuilles * epaisseurUneFeuille;
+            
+            // Épaisseur couverture (Recto + Verso entourant le dos)
+            const epaisseurCouv = (grammageCouv * 0.9) / 1000 * 2; 
+
+            // Épaisseur totale avec la marge d'atelier pour la colle (+0.5 mm)
+            let totalTranche = epaisseurBloc + epaisseurCouv + 0.5;
+
+            if (nbPages <= 0 || grammage <= 0) {
+                totalTranche = 0;
+                epaisseurBloc = 0;
+            }
+
+            // --- MISE À JOUR TEXTES ---
+            document.getElementById('resultatMm').innerText = totalTranche.toFixed(2);
+            document.getElementById('textMmDynamique').innerText = totalTranche.toFixed(1);
+            document.getElementById('noteFeuilles').innerText = nbFeuilles;
+            document.getElementById('noteBloc').innerText = epaisseurBloc.toFixed(2);
+
+            // --- APERÇU PROPORTIONNEL (Règle : 1mm réel = 10px écran) ---
+            const simuElement = document.getElementById('simuTranche');
+            const textTranche = document.getElementById('textTranche');
+            const labelTranche = document.getElementById('labelTranche');
+            
+            let largeurPixels = totalTranche * 10; 
+
+            // Sécurité visuelle pour l'affichage responsive
+            if (largeurPixels < 4) largeurPixels = 4; // Épaisseur minimum visible
+            if (largeurPixels > 240) largeurPixels = 240; // Limite max pour ne pas éclater la boîte sur mobile
+
+            // Application de la largeur proportionnelle exacte
+            simuElement.style.width = largeurPixels + "px";
+
+            // Ergonomie du texte à l'intérieur de la tranche selon sa finesse
+            if (largeurPixels < 30) {
+                textTranche.style.opacity = '0'; // Masquer si c'est trop fin pour être illisible
+            } else if (largeurPixels < 65) {
+                textTranche.style.opacity = '1';
+                labelTranche.style.display = 'none'; // Afficher juste le chiffre (ex: "4.5 mm")
+                textTranche.style.fontSize = "9px";
+            } else {
+                textTranche.style.opacity = '1';
+                labelTranche.style.display = 'inline'; // Tout afficher si l'espace est suffisant
+                textTranche.style.fontSize = "11px";
+            }
+        }
+
+        // Lancement initial au chargement pour configurer l'échelle par défaut
+        calculerTranche();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
